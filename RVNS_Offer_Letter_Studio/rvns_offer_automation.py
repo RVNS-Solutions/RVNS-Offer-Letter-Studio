@@ -323,24 +323,80 @@ def write_report(results, errors, output_dir):
     return path
 
 def gmail_service():
+    """Build Gmail API service using Streamlit Cloud Secrets or local OAuth files."""
     try:
         from google.oauth2.credentials import Credentials
         from google_auth_oauthlib.flow import InstalledAppFlow
         from google.auth.transport.requests import Request
         from googleapiclient.discovery import build
     except ImportError as exc:
-        raise RuntimeError("Gmail libraries are missing. Run install.bat first.") from exc
+        raise RuntimeError(
+            "Gmail libraries are missing. Check requirements.txt and redeploy."
+        ) from exc
+
+    # Streamlit Cloud: credentials are stored in App settings -> Secrets.
+    # Expected TOML:
+    # [gmail]
+    # client_id = "..."
+    # client_secret = "..."
+    # refresh_token = "..."
+    try:
+        import streamlit as st
+        gmail_cfg = st.secrets.get("gmail", {})
+    except Exception:
+        gmail_cfg = {}
+
+    if gmail_cfg:
+        client_id = str(gmail_cfg.get("client_id", "")).strip()
+        client_secret = str(gmail_cfg.get("client_secret", "")).strip()
+        refresh_token = str(gmail_cfg.get("refresh_token", "")).strip()
+        token_uri = str(
+            gmail_cfg.get("token_uri", "https://oauth2.googleapis.com/token")
+        ).strip()
+
+        missing = [
+            key for key, value in (
+                ("client_id", client_id),
+                ("client_secret", client_secret),
+                ("refresh_token", refresh_token),
+            ) if not value
+        ]
+        if missing:
+            raise RuntimeError(
+                "Gmail Secrets are incomplete. Add client_id, client_secret, "
+                "and refresh_token under the [gmail] section."
+            )
+
+        credentials = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri=token_uri,
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=GMAIL_SCOPES,
+        )
+        try:
+            credentials.refresh(Request())
+        except Exception as exc:
+            raise RuntimeError(
+                "Gmail OAuth refresh failed. Check the client ID, client secret, "
+                "refresh token, and Gmail API authorization scopes in Streamlit Secrets."
+            ) from exc
+        return build("gmail", "v1", credentials=credentials)
+
+    # Local Windows: retain the existing credentials.json/token.json workflow.
     token = ROOT / "token.json"
     credentials = None
     if token.exists():
         try:
             token_data = json.loads(token.read_text(encoding="utf-8"))
             granted_scopes = set(token_data.get("scopes") or [])
-            # Force a fresh consent screen if this token predates the gmail.send permission.
             if not set(GMAIL_SCOPES).issubset(granted_scopes):
                 token.unlink(missing_ok=True)
             else:
-                credentials = Credentials.from_authorized_user_file(str(token), GMAIL_SCOPES)
+                credentials = Credentials.from_authorized_user_file(
+                    str(token), GMAIL_SCOPES
+                )
         except Exception:
             credentials = None
             token.unlink(missing_ok=True)
@@ -348,6 +404,7 @@ def gmail_service():
     if credentials and credentials.expired and credentials.refresh_token:
         try:
             credentials.refresh(Request())
+            token.write_text(credentials.to_json(), encoding="utf-8")
         except Exception:
             credentials = None
 
@@ -355,11 +412,17 @@ def gmail_service():
         client_file = ROOT / "credentials.json"
         if not client_file.exists():
             raise FileNotFoundError(
-                "Add your Google OAuth Desktop client file as credentials.json in this folder. Never share it."
+                "For Streamlit Cloud, configure [gmail] secrets. "
+                "For local use, add credentials.json and authorize Gmail."
             )
-        flow = InstalledAppFlow.from_client_secrets_file(str(client_file), GMAIL_SCOPES)
-        credentials = flow.run_local_server(port=0, access_type="offline", prompt="consent")
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(client_file), GMAIL_SCOPES
+        )
+        credentials = flow.run_local_server(
+            port=0, access_type="offline", prompt="consent"
+        )
         token.write_text(credentials.to_json(), encoding="utf-8")
+
     return build("gmail", "v1", credentials=credentials)
 
 def create_gmail_drafts(results, expected_sender="rvnssolutions@gmail.com"):
