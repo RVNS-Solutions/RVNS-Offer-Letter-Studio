@@ -1,0 +1,7 @@
+﻿Student,Email,College,Domain,Mode,Start Date,End Date,Duration,Word File,PDF File,Status
+Sample Student 1,venkatanarayanaa@gmail.com,ABC Engineering College,Python Full Stack Development,Offline,02 November 2026,29 November 2026,4 weeks,Sample_Student_1_Python_Full_Stack_Development_Offline_Row2.docx,Sample_Student_1_Python_Full_Stack_Development_Offline_Row2.pdf,PDF GENERATED
+Sample Student 2,venkatanarayanaa@gmail.com,XYZ Institute of Technology,Java Full Stack Development,Online,05 November 2026,02 December 2026,4 weeks,Sample_Student_2_Java_Full_Stack_Development_Online_Row3.docx,Sample_Student_2_Java_Full_Stack_Development_Online_Row3.pdf,PDF GENERATED
+Sample Student 3,venkatanarayanaa@gmail.com,ABC Engineering College,Web Development,General,10 November 2026,,,Sample_Student_3_Web_Development_General_Row4.docx,Sample_Student_3_Web_Development_General_Row4.pdf,PDF GENERATED
+Sample Student 4,venkatanarayanaa@gmail.com,PQR College,Data Science,Online,15 November 2026,,,Sample_Student_4_Data_Science_Online_Row5.docx,Sample_Student_4_Data_Science_Online_Row5.pdf,PDF GENERATED
+Sample Student 5,venkatanarayanaa@gmail.com,LMN Engineering College,Machine Learning,Offline,,,6 weeks,Sample_Student_5_Machine_Learning_Offline_Row6.docx,Sample_Student_5_Machine_Learning_Offline_Row6.pdf,PDF GENERATED
+Sample Student 6,venkatanarayanaa@gmail.com,DEF College,Python Programming,General,,,,Sample_Student_6_Python_Programming_General_Row7.docx,Sample_Student_6_Python_Programming_General_Row7.pdf,PDF GENERATED
